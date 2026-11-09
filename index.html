@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL to PDF</title>
+    <style>
+        :root {
+            --bg: #f6f7f9;
+            --card: #fff;
+            --text: #1b1f24;
+            --muted: #667085;
+            --accent: #2563eb;
+            --border: #e4e7ec;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1216;
+                --card: #181c22;
+                --text: #eef1f5;
+                --muted: #98a2b3;
+                --accent: #3b82f6;
+                --border: #2a313b;
+            }
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, sans-serif;
+        }
+
+        .card {
+            width: min(520px, 92vw);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: 1.4rem;
+        }
+
+        p {
+            margin: 0 0 20px;
+            color: var(--muted);
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        button {
+            margin-top: 12px;
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        #msg {
+            margin-top: 14px;
+            min-height: 1.2em;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>URL to PDF</h1>
+        <p>Paste a web page address and download it as a PDF.</p>
+        <input id="url" type="url" placeholder="https://example.com" autofocus>
+        <button id="go">Download PDF</button>
+        <div id="msg"></div>
+    </div>
+    <script>
+        const url = document.getElementById("url"),
+            go = document.getElementById("go"),
+            msg = document.getElementById("msg");
+        async function run() {
+            let v = url.value.trim();
+            if (!v) {
+                msg.textContent = "Please enter a URL.";
+                return;
+            }
+            if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+            go.disabled = true;
+            msg.textContent = "Rendering page, please wait…";
+            try {
+                const r = await fetch("/pdf?url=" + encodeURIComponent(v));
+                if (!r.ok) throw new Error(await r.text());
+                const blob = await r.blob();
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = new URL(v).hostname + ".pdf";
+                a.click();
+                URL.revokeObjectURL(a.href);
+                msg.textContent = "Done! Your PDF is downloading.";
+            } catch (e) {
+                msg.textContent = "Error: " + e.message;
+            }
+            go.disabled = false;
+        }
+        go.addEventListener("click", run);
+        url.addEventListener("keydown", e => {
+            if (e.key === "Enter") run();
+        });
+    </script>
+</body>
+
+</html>
