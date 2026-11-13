@@ -1,5 +1,5 @@
 {
-  "name": "url-to-pdf",
+  "name": "urltopdf",
   "version": "1.0.0",
   "type": "module",
   "scripts": { "start": "node server.js" },
